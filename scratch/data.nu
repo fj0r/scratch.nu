@@ -222,7 +222,7 @@ export def --env init [] {
       name: localhost
       data: |-
         host: localhost
-        port: 9900
+        port: 8000
         db: foo
         ns: foo
         username: foo
