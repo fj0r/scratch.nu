@@ -59,7 +59,7 @@ export def run-cmd [
             let cmd = $cmd | render {_: $entry, stdin: $i, args: $args, ...$opt}
             do -i {
                 let cmd = if ($transform | is-empty) { $cmd } else { $"($cmd) | do (view source $transform)" }
-                nu -m light -c $cmd
+                nu -c $"($cmd) | to nuon" | from nuon
             }
         }
     }
@@ -87,7 +87,7 @@ export def performance [
                 $context
             }
 
-            $stdin | run-cmd --runner $config.runner --transform $transform {
+            let r = $stdin | run-cmd --runner $config.runner --transform $transform {
                 cmd: $config.cmd
                 args: $args
                 entry: $f.entry
@@ -96,6 +96,7 @@ export def performance [
             }
 
             rm -rf $f.dir
+            $r
         }
         'data' => {
             let f = if ($context | is-empty) {
