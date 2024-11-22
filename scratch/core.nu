@@ -11,6 +11,7 @@ export def scratch-list [
     ...xtags:string@cmpl-tag-3
     --search(-s): string
     --trash(-T) # show trash
+    --hidden(-H)
     --important(-i): int
     --urgent(-u): int
     --challenge(-c): int
@@ -20,7 +21,6 @@ export def scratch-list [
     --relevant(-r): int@cmpl-relevant-id
     --sort: list<string@cmpl-sort>
     --done(-x):int
-    --untagged(-U)
     --raw
     --md(-m)
     --md-list(-l)
@@ -49,30 +49,14 @@ export def scratch-list [
 
     mut cond = ['parent_id = -1' 'tags.id is not null']
 
-    # (not $trash) hide deleted
-    let exclude_deleted = ["scratch.deleted = ''", "scratch.deleted != ''"]
-    let exclude_tags_hidden = "tags.hidden = 0"
-    let a_exclude_tags_hidden = $"scratch.id not in \(
-        select scratch_id from scratch_tag where tag_id in \(
-            select id from tag where hidden = 1\)\)
-        "
-    # ($untagged)
-    let include_untagged = "tags.name is null"
-    dbg $debug {trash: $trash, notags: ($xtags | is-empty), untagged: $untagged} -t cond
-    $cond ++= match [($xtags | is-empty) $untagged] {
-        # --untagged
-        [true true] => $include_untagged
-        #
-        [true false] => $exclude_tags_hidden
-        # [ --untagged tag ]
-        [false true] => $include_untagged
-        # tag
-        [false false] => ""
-    }
-    | do { let x = $in
-        [($exclude_deleted | get ($trash | into int)) $x]
-        | filter { $in | is-not-empty}
-        | str join ' and '
+    $cond ++= if $trash { "scratch.deleted != ''" } else { "scratch.deleted = ''" }
+
+    if not $hidden {
+        let tags_id = sqlx "select id from tag where hidden = 1"
+        | get id
+        | scratch-tags-children ...$in
+        | each { $in | into string } | str join ', '
+        $cond ++= $"scratch.id not in \(select scratch_id from scratch_tag where tag_id in \(($tags_id)\)\)"
     }
 
     if ($tags.or | is-not-empty) {
