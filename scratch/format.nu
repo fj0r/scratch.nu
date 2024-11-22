@@ -45,7 +45,7 @@ def 'tagsplit' [tags] {
         let t = $i.tags
         let s = if ($tag | is-empty) {
             [
-                [$i.tags.0]
+                [$i.tags.0?]
                 ($i.tags | range 1..)
             ]
         } else {

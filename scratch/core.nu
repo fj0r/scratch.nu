@@ -78,15 +78,25 @@ export def scratch-list [
     if ($tags.or | is-not-empty) {
         let tags_id = scratch-tag-paths-id ...($tags.or | each { $in | split row ':' })
         | each { $in.data | last | get id }
-        | str join ', '
-        let tags_id = $"with recursive g as \(
-            select id, parent_id from tag where id in \(($tags_id)\)
-            union all
-            select t.id, t.parent_id from tag as t join g on g.id = t.parent_id
-        \) select id from g
-        "
-        let tags_id = sqlx $tags_id | get id | each { $in | into string } | str join ', '
+        | scratch-tags-children ...$in
+        | each { $in | into string } | str join ', '
         $cond ++= $"scratch.id in \(select scratch_id from scratch_tag where tag_id in \(($tags_id)\)\)"
+    }
+
+    if ($tags.and | is-not-empty) {
+        let tags_id = scratch-tag-paths-id ...($tags.and | each { $in | split row ':' })
+        | each { $in.data | last | get id }
+        | scratch-tags-children ...$in
+        | each { $in | into string } | str join ', '
+        $cond ++= $"scratch.id in \(select scratch_id from scratch_tag where tag_id in \(($tags_id)\)\)"
+    }
+
+    if ($tags.not | is-not-empty) {
+        let tags_id = scratch-tag-paths-id ...($tags.not | each { $in | split row ':' })
+        | each { $in.data | last | get id }
+        | scratch-tags-children ...$in
+        | each { $in | into string } | str join ', '
+        $cond ++= $"scratch.id not in \(select scratch_id from scratch_tag where tag_id in \(($tags_id)\)\)"
     }
 
     let now = date now
@@ -133,17 +143,6 @@ export def scratch-list [
         $x | first | reject tag | insert tags $t
     }
 
-    let r = if ($tags.and | is-not-empty) or ($tags.not | is-not-empty) {
-        $r
-        | filter {|x|
-            let dt = $x.tags | each { $in | str join ':' }
-            let n = not ($tags.not | any {|i| $dt | any {|j| $j | str starts-with $i } })
-            let a = $tags.and | all {|i| $dt | any {|j| $j | str starts-with $i } }
-            $n and $a
-        }
-    } else {
-        $r
-    }
 
     if $raw {
         $r

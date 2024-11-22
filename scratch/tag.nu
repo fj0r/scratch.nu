@@ -10,13 +10,8 @@ export def scratch-tag-clean [
     let tags_id = $tags | tag-group | get or
     | scratch-tag-paths-id ...($in | each {|x| $x | split row ':' })
     | each { $in.data | last | get id }
-    | str join ', '
-    let tags_id = sqlx $"with recursive g as \(
-        select id, parent_id from tag where id in \(($tags_id)\)
-        union all
-        select t.id, t.parent_id from tag as t join g on g.id = t.parent_id
-    \) select id from g"
-    | get id | each { $in | into string } | str join ', '
+    | scratch-tags-children ...$in
+    | each { $in | into string } | str join ', '
     let $scratch = sqlx $"select scratch_id from scratch_tag where tag_id in \(($tags_id)\)"
     | get scratch_id
     let sid = $scratch | each { $in | into string } | str join ', '

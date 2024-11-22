@@ -104,6 +104,17 @@ export def scratch-tag-paths-id [...tag_path: list<string>] {
     $r
 }
 
+export def scratch-tags-children [...ids] {
+    let tags_id = $ids | str join ', '
+    let tags_id = $"with recursive g as \(
+        select id, parent_id from tag where id in \(($tags_id)\)
+        union all
+        select t.id, t.parent_id from tag as t join g on g.id = t.parent_id
+    \) select id from g
+    "
+    sqlx $tags_id | get id
+}
+
 # add tag
 export def scratch-ensure-tags [tags] {
     mut ids = []
