@@ -391,7 +391,7 @@ export def scratch-clean [
 }
 
 export def scratch-title [
-    id:int@cmpl-untagged-root-scratch
+    id:int@cmpl-scratch-id
 ] {
     sqlx $"select title from scratch where id = ($id)"
     | get 0.title

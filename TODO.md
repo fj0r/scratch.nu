@@ -46,6 +46,7 @@
     - [ ] Rearrange id #256
     - [ ] Markdown dir #257
   - [x] refactor: snew --rewrite #270
+  - [x] scratch_title_autocomplete_adjustment #271
 - [x] Runner
   - [x] exec #31
   - [x] docker-runner #101
