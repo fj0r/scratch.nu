@@ -48,22 +48,16 @@ export def scratch-list [
     | str join ', '
 
     mut cond = ['parent_id = -1' 'tags.id is not null']
+    mut exist_tagsid = []
 
     $cond ++= if $trash { "scratch.deleted != ''" } else { "scratch.deleted = ''" }
-
-    if not $hidden {
-        let tags_id = sqlx "select id from tag where hidden = 1"
-        | get id
-        | scratch-tags-children ...$in
-        | each { $in | into string } | str join ', '
-        $cond ++= $"scratch.id not in \(select scratch_id from scratch_tag where tag_id in \(($tags_id)\)\)"
-    }
 
     if ($tags.or | is-not-empty) {
         let tags_id = scratch-tag-paths-id ...$tags.or
         | each { $in.data | last | get id }
         | scratch-tags-children ...$in
-        | each { $in | into string } | str join ', '
+        $exist_tagsid ++= $tags_id
+        let tags_id = $tags_id | each { $in | into string } | str join ', '
         $cond ++= $"scratch.id in \(select scratch_id from scratch_tag where tag_id in \(($tags_id)\)\)"
     }
 
@@ -71,7 +65,8 @@ export def scratch-list [
         let tags_id = scratch-tag-paths-id ...$tags.and
         | each { $in.data | last | get id }
         | scratch-tags-children ...$in
-        | each { $in | into string } | str join ', '
+        $exist_tagsid ++= $tags_id
+        let tags_id = $tags_id | each { $in | into string } | str join ', '
         $cond ++= $"scratch.id in \(select scratch_id from scratch_tag where tag_id in \(($tags_id)\)\)"
     }
 
@@ -82,6 +77,18 @@ export def scratch-list [
         | each { $in | into string } | str join ', '
         $cond ++= $"scratch.id not in \(select scratch_id from scratch_tag where tag_id in \(($tags_id)\)\)"
     }
+
+    if not $hidden {
+        let tags_id = sqlx "select id from tag where hidden = 1"
+        | get id
+        | scratch-tags-children ...$in
+        let exist_tagsid = $exist_tagsid
+        let tags_id = $tags_id
+        | filter {|x| $x not-in $exist_tagsid }
+        | each { $in | into string } | str join ', '
+        $cond ++= $"scratch.id not in \(select scratch_id from scratch_tag where tag_id in \(($tags_id)\)\)"
+    }
+
 
     let now = date now
     if ($search | is-not-empty) { $cond ++= $"title like '%($search)%'" }
