@@ -91,7 +91,7 @@ export def scratch-list [
 
 
     let now = date now
-    if ($search | is-not-empty) { $cond ++= $"title like '%($search)%'" }
+    if ($search | is-not-empty) { $cond ++= $"lower\(title\) glob lower\('*($search)*'\)" }
     if ($challenge | is-not-empty) { $cond ++= $"challenge >= ($challenge)"}
     if ($important | is-not-empty) { $cond ++= $"important >= ($important)"}
     if ($urgent | is-not-empty) { $cond ++= $"urgent >= ($urgent)"}
@@ -431,9 +431,9 @@ export def scratch-search [
     --num(-n):int = 20
     --untagged
 ] {
-    let k = Q $"%($keyword)%"
-    mut i = [$"title like ($k)"]
-    mut r = [$"body like ($k)"]
+    let k = Q $"*($keyword)*"
+    mut i = [$"lower\(title\) glob lower\(($k)\)"]
+    mut r = [$"lower\(body\) glob lower\(($k)\)"]
     if $untagged {
         $i ++= 'tag_id is null'
         $r ++= 'tag_id is null'
