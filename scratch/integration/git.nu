@@ -1,9 +1,9 @@
-use completion.nu *
-use tag_base.nu *
+use ../completion.nu *
+use ../tag_base.nu *
 
 export def snew [
     ...xtags:string@cmpl-tag-3
-    --parent(-f):int
+    --parent(-f):int=-1
     --scratch(-t): int@cmpl-scratch-id
 ] {
     if ($scratch | is-not-empty) { scratch-out } else { $in | scratch-in }
