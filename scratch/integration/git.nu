@@ -6,7 +6,7 @@ use llm *
 def cmpl-namer [ctx] {
     let text = $ctx | argx parse | get args | tags-group | get other | str join ' '
     if ($text | is-not-empty) {
-        let o = do -i { $text | ai-do name-helper -o }
+        let o = do -i { $text | ai-do name-helper zh usual -o }
         $o | lines
     }
 }
