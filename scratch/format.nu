@@ -38,8 +38,9 @@ def 'list starts-with' [b] {
 
 def 'tagsplit' [tags] {
     let o = $in
+    # TODO: remove
     let tag = if ($tags | is-not-empty) {
-        $tags | each { $in | split row ':' }
+        $tags
     }
     let x = $o | default [] | each {|i|
         let t = $i.tags

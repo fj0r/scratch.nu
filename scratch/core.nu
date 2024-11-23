@@ -30,7 +30,7 @@ export def scratch-list [
     --debug
     --accumulator(-a): any
 ] {
-    let tags = $xtags | tag-group
+    let tags = $xtags | tags-group
 
     let sortable = [
         value, done, kind,
@@ -60,7 +60,7 @@ export def scratch-list [
     }
 
     if ($tags.or | is-not-empty) {
-        let tags_id = scratch-tag-paths-id ...($tags.or | each { $in | split row ':' })
+        let tags_id = scratch-tag-paths-id ...$tags.or
         | each { $in.data | last | get id }
         | scratch-tags-children ...$in
         | each { $in | into string } | str join ', '
@@ -68,7 +68,7 @@ export def scratch-list [
     }
 
     if ($tags.and | is-not-empty) {
-        let tags_id = scratch-tag-paths-id ...($tags.and | each { $in | split row ':' })
+        let tags_id = scratch-tag-paths-id ...$tags.and
         | each { $in.data | last | get id }
         | scratch-tags-children ...$in
         | each { $in | into string } | str join ', '
@@ -76,7 +76,7 @@ export def scratch-list [
     }
 
     if ($tags.not | is-not-empty) {
-        let tags_id = scratch-tag-paths-id ...($tags.not | each { $in | split row ':' })
+        let tags_id = scratch-tag-paths-id ...$tags.not
         | each { $in.data | last | get id }
         | scratch-tags-children ...$in
         | each { $in | into string } | str join ', '
@@ -170,7 +170,7 @@ export def scratch-add [
     let body = $in
     let cfg = if ($config | is-empty) { get-config $kind --preset $preset } else { $config }
 
-    let xargs = $xargs | tag-group
+    let xargs = $xargs | tags-group
     let tags = $xargs.or
     let title = $xargs.other | str join ' '
     let x = $body | entity --batch=$batch $cfg --title $title --created --locate-body=$locate_body --perf-ctx $perf_ctx
@@ -311,7 +311,7 @@ export def scratch-attrs [
     }
 
     if ($xtags | is-not-empty) {
-        let tags = $xtags | tag-group
+        let tags = $xtags | tags-group
         if ($tags.and | is-not-empty) {
             let tids = scratch-ensure-tags $tags.and
             for id in $ids {
@@ -319,7 +319,7 @@ export def scratch-attrs [
             }
         }
         if ($tags.not | is-not-empty) {
-            let tids = scratch-tag-paths-id ...($tags.not | each { $in | split row ':' })
+            let tids = scratch-tag-paths-id ...$tags.not
             | each {|y|
                 if ($y.data | length) == ($y.path | length) {
                     $y.data | last | get id
@@ -387,9 +387,9 @@ export def scratch-data [...xargs: any@cmpl-tag-3] {
     let ids = $xargs | filter { ($in | describe) == 'int' }
     let xtags = $xargs | filter { ($in | describe) != 'int' }
 
-    let tags_id = $xtags | tag-group | get or
+    let tags_id = $xtags | tags-group | get or
     let t = if ($tags_id | is-not-empty) {
-        let tags_id = scratch-tag-paths-id ...($tags_id | each { $in | split row ':'})
+        let tags_id = scratch-tag-paths-id ...$tags_id
         | each { $in.data | last | get id }
         | str join ', '
 

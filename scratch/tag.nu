@@ -7,8 +7,8 @@ export def scratch-tag-clean [
     tags: string@cmpl-tag-1
     --with-tag(-T)
 ] {
-    let tags_id = $tags | tag-group | get or
-    | scratch-tag-paths-id ...($in | each {|x| $x | split row ':' })
+    let tags_id = $tags | tags-group | get or
+    | scratch-tag-paths-id ...$in
     | each { $in.data | last | get id }
     | scratch-tags-children ...$in
     | each { $in | into string } | str join ', '
@@ -46,7 +46,7 @@ export def scratch-untagged [id] {
 }
 
 export def scratch-tag-rename [from:string@cmpl-tag-1 to] {
-    let tag = $from | tag-group | get or | scratch-ensure-tags $in | get 0
+    let tag = $from | tags-group | get or | scratch-ensure-tags $in | get 0
     sqlx $"update tag set name = (Q $to) where id = ($tag)"
 }
 
@@ -59,11 +59,11 @@ export def scratch-tag-move [
     --from(-f):string@cmpl-id-tag
     --to(-t):string@cmpl-tag-1
 ] {
-    let fr = $from | tag-group | get or.0 | split row ':'
+    let fr = $from | tags-group | get or.0
     let fo = scratch-tag-paths-id $fr | get data.0
     let fo = if ($fr | length) == ($fo | length) { $fo | last | get id }
     if ($fo | is-empty) { error make {msg: $"`tag ($from)` not exists" }}
-    let to = $to | tag-group | get or.0
+    let to = $to | tags-group | get or.0
     let to = scratch-ensure-tags [$to] | last
     let q = $"update scratch_tag set tag_id = ($to) where scratch_id = ($id) and tag_id = ($fo)"
     sqlx $q
@@ -73,14 +73,13 @@ export def scratch-tag-toggle [
     id: int@cmpl-scratch-id
     ...tags: string@cmpl-tag-2
 ] {
-    let tags = $tags | tag-group
+    let tags = $tags | tags-group
     if ($tags.and | is-not-empty) {
         let tids = scratch-ensure-tags $tags.and
         $tids | scratch-tagged $id
     }
     if ($tags.not | is-not-empty) {
-        $tags.not | each {
-            let o = $in | split row ':'
+        $tags.not | each {|o|
             let i = scratch-tag-paths-id $o | get data.0
             if ($o | length) == ($i | length) {
                 $i | last | get id
@@ -92,7 +91,7 @@ export def scratch-tag-toggle [
 export def scratch-tag-add [
     ...tags: string@cmpl-tag-1
 ] {
-    $tags | tag-group | get or | scratch-ensure-tags $in
+    $tags | tags-group | get or | scratch-ensure-tags $in
 }
 
 export def scratch-tag-delete [

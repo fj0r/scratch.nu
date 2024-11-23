@@ -40,15 +40,20 @@ export def cmpl-id-tag [ctx] {
     }
 }
 
-export def tag-group [] {
+export def tags-group [] {
     let x = $in
     mut $r = { not: [], and: [], or: [], other: [] }
     for i in $x {
-        match ($i | str substring ..<1) {
-            '^' => { $r.not ++= $i | str substring 1.. }
-            '+' => { $r.and ++= $i | str substring 1.. }
-            ':' => { $r.or ++= $i | str substring 1.. }
-            _ => { $r.other ++= $i }
+        let h = $i | str substring ..<1
+        if $h in ['^' '+' ':'] {
+            let v = $i | str substring 1.. | split row ':'
+            match $h {
+                '^' => {$r.not ++= [$v]}
+                '+' => {$r.and ++= [$v]}
+                ':' => {$r.or ++= [$v]}
+            }
+        } else {
+            $r.other ++= $i
         }
     }
     $r
@@ -112,7 +117,7 @@ export def scratch-tags-children [...ids] {
 # add tag
 export def scratch-ensure-tags [tags] {
     mut ids = []
-    let tags = scratch-tag-paths-id ...($tags | each { $in | split row ':' })
+    let tags = scratch-tag-paths-id ...$tags
     for tag in $tags {
         let ts = $tag.path
         let r = $tag.data
