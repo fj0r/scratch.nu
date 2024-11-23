@@ -1,14 +1,29 @@
 use ../completion.nu *
 use ../tag_base.nu *
+use argx
+use llm *
+
+def cmpl-namer [ctx] {
+    let text = $ctx | argx parse | get args | tags-group | get other | str join ' '
+    if ($text | is-not-empty) {
+        let o = do -i { $text | ai-do name-helper -o }
+        $o | lines
+    }
+}
 
 export def snew [
     ...xtags:string@cmpl-tag-3
+    --rewrite(-r):string@cmpl-namer
     --parent(-f):int=-1
     --scratch(-t): int@cmpl-scratch-id
 ] {
-    if ($scratch | is-not-empty) { scratch-out } else { $in | scratch-in }
-    | ai-do trans-to en -o
-    | scratch-add ...$xtags -f $parent
+    let xtags = if ($rewrite | is-not-empty) {
+        let xtags = $xtags | tags-group
+        $xtags | update other $rewrite | group-to-tags
+    } else {
+        $xtags
+    }
+    scratch-add ...$xtags -f $parent --batch
 }
 
 

@@ -390,6 +390,13 @@ export def scratch-clean [
     }
 }
 
+export def scratch-title [
+    id:int@cmpl-untagged-root-scratch
+] {
+    sqlx $"select title from scratch where id = ($id)"
+    | get 0.title
+}
+
 export def scratch-data [...xargs: any@cmpl-tag-3] {
     let ids = $xargs | filter { ($in | describe) == 'int' }
     let xtags = $xargs | filter { ($in | describe) != 'int' }

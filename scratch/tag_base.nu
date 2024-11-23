@@ -59,6 +59,13 @@ export def tags-group [] {
     $r
 }
 
+export def group-to-tags [] {
+    let o = $in
+    $o.other
+    | append ($o.not | each { $"^($in | str join ':')" })
+    | append ($o.and | each { $"+($in | str join ':')" })
+    | append ($o.or | each { $":($in | str join ':')" })
+}
 
 export def tag-tree [name?: string='tags' --where: string='parent_id in (-1)'] {
     let t = $"_(random chars -l 3)"
