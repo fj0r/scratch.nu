@@ -159,7 +159,7 @@ export def seed [] {
           let x = if ($i.item | describe -d).type == 'string' {$\"\\"($i.item)\\"\"} else { $i.item }
           $a | str replace -a $\"%($i.index + 1)\" $\"($x)\"
         }
-        | duckdb -json | lines | range 2.. | str join (char newline) | from json
+        | duckdb -json | lines | range 1.. | str join (char newline) | from json
     - name: myduck
       entry: scratch.sql
       comment: '-- '
