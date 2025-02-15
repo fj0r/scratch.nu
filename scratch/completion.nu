@@ -10,7 +10,7 @@ export def cmpl-scratch-id [] {
 
 export def list-untagged-root [type, ctx] {
     let ts = term size
-    let rw = $ts.columns - 8
+    let rw = $ts.columns
     let ch = $ts.rows - 5
     let cond = if ($ctx | is-not-empty) {
         mut r = []
